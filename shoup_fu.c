@@ -14,19 +14,23 @@ int main() {
     ZZ_pX poly;
     char *tmp = NULL;
 
+    /* Generate RSA key */
     rsa = RSA_generate_key(2048, e, NULL, NULL);
     if (!rsa)
         return -1;
 
+    /* Extract modulus and initalize NTL to use it */
     tmp = BN_bn2dec(rsa->n);
     ZZ_p::init(to_ZZ(tmp));
     free(tmp);
 
+    /* Extract secret exponent */
     ZZ_p secret_exponent;
     tmp = BN_bn2dec(rsa->d);
     secret_exponent = to_ZZ_p(to_ZZ(tmp));
 
-    random(poly, num_nodes);
+    /* Generate random polynomial of degree t+1 o that f(0) = secret exponent */
+    random(poly, threshold + 1);
     SetCoeff(poly, 0, 0);
     SetCoeff(poly, 0, secret_exponent);
 
