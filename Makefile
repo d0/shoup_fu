@@ -1,6 +1,6 @@
 CC = clang
 CPP = g++
-CFLAGS = -Wall -Wextra -Wno-unused-parameter -O2 -I$(HOME)/.local/include
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -g -O2 -I$(HOME)/.local/include
 LDFLAGS = -L$(HOME)/workspace/OpenPACE/trunk/openssl/ -lcrypto -L$(HOME)/.local/lib -lntl -lm
 
 all: shoup_fu.c
