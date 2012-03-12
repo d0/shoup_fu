@@ -29,6 +29,7 @@ int main() {
     ZZ_pX poly;
     char *tmp = NULL;
     pthread_t nodes[num_nodes];
+    Share *shares[num_nodes];
 
     /* Generate RSA key */
     rsa = RSA_generate_key(2048, e, NULL, NULL);
@@ -50,30 +51,29 @@ int main() {
     SetCoeff(poly, 0, secret_exponent);
 
 //    RSA_print_fp(stdout, rsa, 0);
-//    printf("d = %s\n", BN_bn2dec(rsa->d));
-//    printf("\n");
-//    std::cout << poly;
-//    printf("\n");
+      cout << "d = " << BN_bn2dec(rsa->d) << endl;
+//    cout << poly << endl;
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
         ZZ_p val = eval(poly, to_ZZ_p(i + 1)); 
-        Share *share = new Share; //FIXME: Memory leak
-        share->id = i+1;
-        share->value = val;
+        shares[i] = new Share; //FIXME: Memory leak
+        shares[i]->id = i+1;
+        shares[i]->value = val;
 //        cout << "Thread: " << share->id << endl;
 //        cout << share << endl;
 //        cout  << share->value << endl;
-        pthread_create(&nodes[i], NULL, node, (void*) share);
+        pthread_create(&nodes[i], NULL, node, (void*) shares[i]);
     }
 
     for (int i=0; i<num_nodes; i++)
        pthread_join(nodes[i], NULL);
 
-err:
     if (rsa)
         RSA_free(rsa);
     if (tmp)
         free(tmp);
+    for (int i=0; i<num_nodes; i++)
+        delete shares[i];
     return 0;
 }
