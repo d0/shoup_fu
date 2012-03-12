@@ -10,6 +10,7 @@
 #define threshold 3
 #define num_nodes 5
 #define e 65537
+#define message 1337
 
 NTL_CLIENT
 
@@ -17,9 +18,31 @@ class Share { public: int id; ZZ_p value;};
 
 void *node(void *ptr) {
     Share *share = (Share*) ptr;
+    double l = 1.0;
+
     sleep(share->id);
-    cout  << "Thread: " << share->id << endl;
-    cout  << share->value << endl;
+//    cout  << "Thread: " << share->id << endl;
+//    cout  << share->value << endl;
+
+    /* Compute the Lagrange coeffient for the base polynomial at x=0
+     * l_{i,0} = \Prod{j}{j-1} \forall j \in A, j \neq i where A is the set of
+     * cooperating nodes */
+
+    /* In this version we assume that the first t+1 nodes cooperate (i.e. there
+     * is no agreement porotcol involved and the set A is known in advance) */
+    for (int i = 1; i<=threshold+1; i++) {
+        if (i == share->id)
+            continue;
+        l *= ((double) i / (i - share->id));
+    }
+
+    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
+
+    ZZ_p k = share->value * (long) l;
+    cout << "k_i for Thread " << share->id << ": " << k << endl;
+    ZZ_p m = to_ZZ_p(message);
+//    ZZ_p threshold_sig = power(m, k);
+
     return NULL;
 }
 
@@ -56,8 +79,8 @@ int main() {
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
-        ZZ_p val = eval(poly, to_ZZ_p(i + 1)); 
-        shares[i] = new Share; //FIXME: Memory leak
+        ZZ_p val = eval(poly, to_ZZ_p(i + 1));
+        shares[i] = new Share;
         shares[i]->id = i+1;
         shares[i]->value = val;
 //        cout << "Thread: " << share->id << endl;
