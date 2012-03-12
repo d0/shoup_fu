@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <iostream>
 #include <pthread.h>
 #include <openssl/rsa.h>
 #include <NTL/ZZ_pX.h>
 #include <NTL/ZZ_p.h>
+#include <unistd.h>
 
 #define threshold 3
 #define num_nodes 5
@@ -11,9 +13,13 @@
 
 NTL_CLIENT
 
+class Share { public: int id; ZZ_p value;};
+
 void *node(void *ptr) {
-    ZZ_p *share = (ZZ_p*) ptr;
-    cout  << *share << endl;
+    Share *share = (Share*) ptr;
+    sleep(share->id);
+    cout  << "Thread: " << share->id << endl;
+    cout  << share->value << endl;
     return NULL;
 }
 
@@ -43,17 +49,22 @@ int main() {
     random(poly, threshold + 1);
     SetCoeff(poly, 0, secret_exponent);
 
-    RSA_print_fp(stdout, rsa, 0);
+//    RSA_print_fp(stdout, rsa, 0);
 //    printf("d = %s\n", BN_bn2dec(rsa->d));
-    printf("\n");
-    std::cout << poly;
-    printf("\n");
+//    printf("\n");
+//    std::cout << poly;
+//    printf("\n");
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
-        ZZ_p share = eval(poly, to_ZZ_p(i + 1)); //FIXME: Memory leak
-        cout << share << endl;
-        pthread_create(&nodes[i], NULL, node, (void*) &share);
+        ZZ_p val = eval(poly, to_ZZ_p(i + 1)); 
+        Share *share = new Share; //FIXME: Memory leak
+        share->id = i+1;
+        share->value = val;
+//        cout << "Thread: " << share->id << endl;
+//        cout << share << endl;
+//        cout  << share->value << endl;
+        pthread_create(&nodes[i], NULL, node, (void*) share);
     }
 
     for (int i=0; i<num_nodes; i++)
