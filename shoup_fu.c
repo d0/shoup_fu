@@ -39,9 +39,9 @@ void *node(void *ptr) {
     cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
 
     ZZ_p k = share->value * (long) l;
-    cout << "k_i for Thread " << share->id << ": " << k << endl;
     ZZ_p m = to_ZZ_p(message);
-//    ZZ_p threshold_sig = power(m, k);
+    ZZ_p threshold_sig = power(m, k.LoopHole());
+    cout << "threshold_sig  for Thread " << share->id << ": " << threshold_sig<< endl;
 
     return NULL;
 }
