@@ -74,18 +74,14 @@ int main() {
     SetCoeff(poly, 0, secret_exponent);
 
 //    RSA_print_fp(stdout, rsa, 0);
-      cout << "d = " << BN_bn2dec(rsa->d) << endl;
+//    cout << "d = " << BN_bn2dec(rsa->d) << endl;
 //    cout << poly << endl;
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
-        ZZ_p val = eval(poly, to_ZZ_p(i + 1));
         shares[i] = new Share;
         shares[i]->id = i+1;
-        shares[i]->value = val;
-//        cout << "Thread: " << share->id << endl;
-//        cout << share << endl;
-//        cout  << share->value << endl;
+        shares[i]->value = eval(poly, to_ZZ_p(i + 1));
         pthread_create(&nodes[i], NULL, node, (void*) shares[i]);
     }
 
