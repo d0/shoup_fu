@@ -71,8 +71,8 @@ int main() {
     tmp = BN_bn2dec(rsa->d);
     secret_exponent = to_ZZ_p(to_ZZ(tmp));
 
-    /* Generate random polynomial of degree t+1 o that f(0) = secret exponent */
-    random(poly, threshold + 1);
+    /* Generate random polynomial of degree t so that f(0) = secret exponent */
+    random(poly, threshold);
     SetCoeff(poly, 0, secret_exponent);
 
 //    RSA_print_fp(stdout, rsa, 0);
@@ -94,11 +94,19 @@ int main() {
     for (int i=0; i<num_nodes; i++) {
        pthread_join(nodes[i], &sig_shares[i]);
        ZZ_p *tmp = (ZZ_p *) sig_shares[i];
-       combined_sig *= *tmp;
+       if (i <= threshold+1)
+           combined_sig *= *tmp;
 //       cout << *tmp;
     }
 
     cout << "Combined signature: " << combined_sig << endl;
+
+    /* Extract public exponent */
+    ZZ_p public_exponent = to_ZZ_p(e);
+    ZZ_p sig = power(combined_sig, public_exponent.LoopHole());
+
+    /* If everything worked sig should equal message */
+    cout << "Signature: " << sig << endl;
 
     if (rsa)
         RSA_free(rsa);
