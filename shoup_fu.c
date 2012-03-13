@@ -41,9 +41,10 @@ void *node(void *ptr) {
     ZZ_p k = share->value * (long) l;
     ZZ_p m = to_ZZ_p(message);
     ZZ_p threshold_sig = power(m, k.LoopHole());
-    cout << "threshold_sig  for Thread " << share->id << ": " << threshold_sig<< endl;
+//    cout << "threshold_sig  for Thread " << share->id << ": " << threshold_sig<< endl;
 
-    return NULL;
+    ZZ_p *result = new ZZ_p(threshold_sig);
+    return (void*) result;
 }
 
 
@@ -53,6 +54,7 @@ int main() {
     char *tmp = NULL;
     pthread_t nodes[num_nodes];
     Share *shares[num_nodes];
+    void *sig_shares[num_nodes];
 
     /* Generate RSA key */
     rsa = RSA_generate_key(2048, e, NULL, NULL);
@@ -79,20 +81,26 @@ int main() {
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
+        ZZ_p val = eval(poly, to_ZZ_p(i + 1));
         shares[i] = new Share;
         shares[i]->id = i+1;
-        shares[i]->value = eval(poly, to_ZZ_p(i + 1));
+        shares[i]->value = val;
         pthread_create(&nodes[i], NULL, node, (void*) shares[i]);
     }
 
-    for (int i=0; i<num_nodes; i++)
-       pthread_join(nodes[i], NULL);
+    for (int i=0; i<num_nodes; i++) {
+       pthread_join(nodes[i], &sig_shares[i]);
+       ZZ_p *tmp = (ZZ_p *) sig_shares[i];
+       cout << *tmp;
+    }
 
     if (rsa)
         RSA_free(rsa);
     if (tmp)
         free(tmp);
-    for (int i=0; i<num_nodes; i++)
+    for (int i=0; i<num_nodes; i++) {
         delete shares[i];
+        delete (ZZ_p*) sig_shares[i];
+    }
     return 0;
 }
