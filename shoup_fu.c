@@ -12,6 +12,9 @@
 #define e 65537
 #define message 1337
 
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 NTL_CLIENT
 
 class Share { public: int id; ZZ_p value;};
@@ -20,7 +23,6 @@ void *node(void *ptr) {
     Share *share = (Share*) ptr;
     double l = 1.0;
 
-    sleep(share->id);
 //    cout  << "Thread: " << share->id << endl;
 //    cout  << share->value << endl;
 
@@ -38,12 +40,14 @@ void *node(void *ptr) {
 
     cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
 
+    pthread_mutex_lock(&mutex);
     ZZ_p k = share->value * (long) l;
     ZZ_p m = to_ZZ_p(message);
     ZZ_p threshold_sig = power(m, k.LoopHole());
 //    cout << "threshold_sig  for Thread " << share->id << ": " << threshold_sig<< endl;
 
     ZZ_p *result = new ZZ_p(threshold_sig);
+    pthread_mutex_unlock(&mutex);
     return (void*) result;
 }
 
