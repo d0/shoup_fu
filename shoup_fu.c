@@ -88,11 +88,17 @@ int main() {
         pthread_create(&nodes[i], NULL, node, (void*) shares[i]);
     }
 
+    ZZ_p combined_sig = to_ZZ_p(1);
+
+    /* Collect the threshold signatures from each thread and combine them */
     for (int i=0; i<num_nodes; i++) {
        pthread_join(nodes[i], &sig_shares[i]);
        ZZ_p *tmp = (ZZ_p *) sig_shares[i];
-       cout << *tmp;
+       combined_sig *= *tmp;
+//       cout << *tmp;
     }
+
+    cout << "Combined signature: " << combined_sig << endl;
 
     if (rsa)
         RSA_free(rsa);
