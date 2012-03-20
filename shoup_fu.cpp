@@ -116,7 +116,8 @@ int main() {
         combined_sec += sec_shares[i];
     }
 
-//    cout << "Expected result: " << power(to_ZZ_p(message), secret_exponent.LoopHole()) << endl;
+    cout << "Expected result: " << power(to_ZZ_p(message), rep(secret_exponent)) << endl << endl;
+    cout << "Threshold Sig: " << combined_sig << endl << endl;
 
     cout << "Recovered secret: " << combined_sec << endl;
 /*    if (combined_sig == secret_exponent)
