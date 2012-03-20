@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <iostream>
+//#include <iostream>
 #include <pthread.h>
 #include <openssl/rsa.h>
 #include <NTL/ZZ_pX.h>
@@ -114,13 +114,11 @@ int main() {
 
     /* Collect the threshold signatures from each thread and combine them */
     for (int i=0; i<num_nodes; i++) {
-//       cout << sig_shares[i]) << endl;
-       if (i <= threshold)
-           combined_sig += sig_shares[i];
+        if (i <= threshold)
+           combined_sig += sig_shares[i];   
     }
 
 //    cout << "Expected result: " << power(to_ZZ_p(message), secret_exponent.LoopHole()) << endl;
-
 
     cout << "Recovered signature: " << combined_sig << endl;
     if (combined_sig == secret_exponent)
@@ -130,10 +128,12 @@ int main() {
 
     /* Extract public exponent */
     ZZ_p public_exponent = to_ZZ_p(e);
-    ZZ_p sig = power(combined_sig, public_exponent.LoopHole());
+    ZZ_p sig = power(to_ZZ_p(message), combined_sig.LoopHole());
+    ZZ_p ver = power(sig, public_exponent.LoopHole());
 
-    /* If everything worked sig should equal message */
-    cout << "Signature: " << sig << endl;
+    /* If everything worked ver should equal message */
+    cout << "Signature: " << sig << endl << endl;
+    cout << "Verifier: " << ver << endl << endl;
 
     if (rsa)
         RSA_free(rsa);
