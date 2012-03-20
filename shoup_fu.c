@@ -19,7 +19,7 @@ NTL_CLIENT
 
 class Share { public: int id; ZZ_p value;};
 
-void *node(void *ptr) {
+void *recover_secret(void *ptr) {
     Share *share = (Share*) ptr;
     double l = 1.0;
 
@@ -38,7 +38,36 @@ void *node(void *ptr) {
         l *= ((double) i / (i - share->id));
     }
 
-    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
+//    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
+
+    pthread_mutex_lock(&mutex);
+    ZZ_p k = share->value * (long) l;
+
+    ZZ_p *result = new ZZ_p(k);
+    pthread_mutex_unlock(&mutex);
+    return (void*) result;
+}
+
+void *compute_threshold_sig(void *ptr) {
+    Share *share = (Share*) ptr;
+    double l = 1.0;
+
+//    cout  << "Thread: " << share->id << endl;
+//    cout  << share->value << endl;
+
+    /* Compute the Lagrange coeffient for the base polynomial at x=0
+     * l_{i,0} = \Prod{j}{j-1} \forall j \in A, j \neq i where A is the set of
+     * cooperating nodes */
+
+    /* In this version we assume that the first t+1 nodes cooperate (i.e. there
+     * is no agreement porotcol involved and the set A is known in advance) */
+    for (int i = 1; i<=threshold+1; i++) {
+        if (i == share->id)
+            continue;
+        l *= ((double) i / (i - share->id));
+    }
+
+//    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
 
     pthread_mutex_lock(&mutex);
     ZZ_p k = share->value * (long) l;
@@ -50,7 +79,6 @@ void *node(void *ptr) {
     pthread_mutex_unlock(&mutex);
     return (void*) result;
 }
-
 
 int main() {
     RSA *rsa = NULL;
@@ -80,8 +108,9 @@ int main() {
     SetCoeff(poly, 0, secret_exponent);
 
 //    RSA_print_fp(stdout, rsa, 0);
-//    cout << "d = " << BN_bn2dec(rsa->d) << endl;
+    cout << "d = " << tmp << endl;
 //    cout << poly << endl;
+//    cout << deg(poly) << endl;
 
     /* Generate a thread for every node */
     for (int i=0; i<num_nodes; i++) {
@@ -89,28 +118,36 @@ int main() {
         shares[i] = new Share;
         shares[i]->id = i+1;
         shares[i]->value = val;
-        pthread_create(&nodes[i], NULL, node, (void*) shares[i]);
+        pthread_create(&nodes[i], NULL, recover_secret, (void*) shares[i]);
     }
 
-    ZZ_p combined_sig = to_ZZ_p(1);
+//    ZZ_p combined_sig = to_ZZ_p(1);
+    ZZ_p combined_sig = to_ZZ_p(0);
 
     /* Collect the threshold signatures from each thread and combine them */
     for (int i=0; i<num_nodes; i++) {
        pthread_join(nodes[i], &sig_shares[i]);
        ZZ_p *tmp = (ZZ_p *) sig_shares[i];
-       if (i <= threshold+1)
-           combined_sig *= *tmp;
-//       cout << *tmp;
+/*       if (i <= threshold+1)
+           combined_sig *= *tmp; */
+       if (i <= threshold) {
+           combined_sig += *tmp;
+//           cout << *tmp << endl << endl;
+        }
     }
 
-    cout << "Combined signature: " << combined_sig << endl;
+    cout << "Recovered signature: " << combined_sig << endl;
+    if (combined_sig == secret_exponent)
+        cout << "Win" << endl;
+    else
+        cout << "Fail" << endl;
 
     /* Extract public exponent */
     ZZ_p public_exponent = to_ZZ_p(e);
-    ZZ_p sig = power(combined_sig, public_exponent.LoopHole());
+//    ZZ_p sig = power(combined_sig, public_exponent.LoopHole());
 
     /* If everything worked sig should equal message */
-    cout << "Signature: " << sig << endl;
+//    cout << "Signature: " << sig << endl;
 
     if (rsa)
         RSA_free(rsa);
