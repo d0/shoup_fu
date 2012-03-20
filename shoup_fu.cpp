@@ -1,11 +1,7 @@
-#include <stdio.h>
-#include <stdint.h>
 //#include <iostream>
-#include <pthread.h>
 #include <openssl/rsa.h>
 #include <NTL/ZZ_pX.h>
 #include <NTL/ZZ_p.h>
-#include <unistd.h>
 
 #define threshold 3
 #define num_nodes 5
