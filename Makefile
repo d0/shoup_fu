@@ -5,6 +5,7 @@ LDFLAGS = -L$(HOME)/workspace/OpenPACE/trunk/openssl/ -lcrypto -L$(HOME)/.local/
 
 all: shoup_fu.cpp
 	$(CPP) $(CFLAGS) shoup_fu.cpp -o shoup_fu $(LDFLAGS)
+	$(CPP) $(CFLAGS) Poly.cpp -o poly $(LDFLAGS)
 
 valgrind:
 	LD_LIBRARY_PATH=$(HOME)/workspace/OpenPACE/trunk/openssl/ valgrind --leak-check=full --track-origins=yes ./shoup_fu
