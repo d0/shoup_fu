@@ -10,11 +10,11 @@ public:
     BIGNUM *eval(unsigned long x);
     void set_coeff(unsigned int i, const BIGNUM *coeff);
     void print();
-    
+
 private:
     unsigned int deg;
     BIGNUM *modulus;
-    BIGNUM **coeffs; 
+    BIGNUM **coeffs;
 };
 
 class Share{

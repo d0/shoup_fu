@@ -35,8 +35,8 @@ BIGNUM * Poly::eval(unsigned long x) {
     BIGNUM *res = NULL;
     BIGNUM *xval = NULL;
     BIGNUM *tmp = NULL;
-    BIGNUM *tmp2 = NULL;    
-        
+    BIGNUM *tmp2 = NULL;
+
     bn_ctx = BN_CTX_new();
     BN_CTX_init(bn_ctx);
     res = BN_new();
@@ -45,10 +45,10 @@ BIGNUM * Poly::eval(unsigned long x) {
     BN_set_word(xval, x);
     tmp = BN_new();
     tmp2 = BN_new();
-        
+
     if (!tmp || !bn_ctx || !res || !xval)
         cout << "Fuck" << endl;
-    
+
     /* For all coeffiecients a compute a*x^i */
     for (unsigned int i=0; i<=deg; i++) {
         BN_set_word(tmp, i);
@@ -57,22 +57,22 @@ BIGNUM * Poly::eval(unsigned long x) {
         BN_mod_add(tmp2, res, tmp, modulus, bn_ctx);
         BN_swap(tmp2, res);
     }
-    
+
     return res;
 }
 
 void Poly::set_coeff(unsigned int i, const BIGNUM *coeff) {
     if (i > deg)
         return;
-        
+
     BN_free(coeffs[i]);
     coeffs[i] = BN_dup(coeff);
-    
+
     return;
 }
 
 void Poly::print() {
-    
+
     for (unsigned int i=0; i<=deg; i++) {
         cout << BN_bn2hex(coeffs[i]) << " x^" << i;
         if (i != deg)
@@ -80,7 +80,7 @@ void Poly::print() {
         else
             cout << " mod " << BN_bn2hex(modulus);
     }
-    
+
     cout << endl;
 }
 
@@ -98,7 +98,7 @@ BIGNUM * recover_secret(Share const *share) {
     double l = 1.0;
     BIGNUM *ret = NULL;
     BIGNUM *tmp = NULL;
-    
+
     ret = BN_new();
     tmp = BN_new();
 
@@ -111,7 +111,7 @@ BIGNUM * recover_secret(Share const *share) {
 
     /* In this version we assume that the first t+1 nodes cooperate (i.e. there
      * is no agreement porotcol involved and the set A is known in advance) */
-     
+
     /*FIXME: Division in Z_p is not necessarily feasible (if p is not prime and phi(p) is unknown) */
     for (int i = 1; i<=threshold+1; i++) {
         if (i == share->id)
@@ -201,10 +201,10 @@ int main() {
     BIGNUM *sig_shares[num_nodes];
     BIGNUM *sec_shares[num_nodes];
     BIGNUM *exponent = NULL;
-    
+
     bn_ctx = BN_CTX_new();
     BN_CTX_init(bn_ctx);
-    
+
     /* Generate RSA key */
     rsa = RSA_generate_key(2048, e, NULL, NULL);
     if (!rsa)
@@ -241,10 +241,10 @@ int main() {
 
     cout << BN_bn2hex(recovered) << endl;
     cout << BN_bn2hex(threshold_sig) << endl;
-    
+
     exponent = BN_new();
     BN_set_word(exponent, e);
-    
+
     BN_mod_exp(tmp, threshold_sig, exponent, rsa->n, bn_ctx);
     cout << BN_bn2dec(tmp) << endl;
     delete poly;
