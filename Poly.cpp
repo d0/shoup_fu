@@ -59,6 +59,12 @@ BIGNUM * Poly::eval(unsigned long x) {
         BN_swap(tmp2, res);
     }
 
+    BN_free(res);
+    BN_free(xval);
+    BN_free(tmp);
+    BN_free(tmp2);
+    BN_CTX_free(bn_ctx);
+
     return res;
 }
 
