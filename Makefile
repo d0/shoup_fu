@@ -1,5 +1,5 @@
 CC = clang
-CPP = clang++
+CPP = g++
 CFLAGS = -Wall -Wextra -Wno-unused-parameter -g -O2 -I$(HOME)/.local/include
 LDFLAGS = -L$(HOME)/workspace/OpenPACE/trunk/openssl/ -lcrypto -L$(HOME)/.local/lib -lntl -lm
 

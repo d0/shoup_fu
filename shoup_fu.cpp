@@ -13,7 +13,8 @@ NTL_CLIENT
 class Share { public: int id; ZZ_p value;};
 
 ZZ_p recover_secret(Share const *share) {
-    double l = 1.0;
+    ZZ_p l = ZZ_p();
+    l += 1;
 
 //    cout  << "Share: " << share->id << endl;
 //    cout  << share->value << endl;
@@ -24,21 +25,23 @@ ZZ_p recover_secret(Share const *share) {
 
     /* In this version we assume that the first t+1 nodes cooperate (i.e. there
      * is no agreement porotcol involved and the set A is known in advance) */
-    for (int i = 1; i<=threshold+1; i++) {
+    for (long i = 1; i<=threshold+1; i++) {
         if (i == share->id)
             continue;
-        l *= ((double) i / (i - share->id));
+        l *= i;
+        l /= i - share->id;;
     }
 
 //    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
 
-    ZZ_p k = share->value * (long) l;
+    ZZ_p k = share->value * l;
 
     return k;
 }
 
 ZZ_p compute_threshold_sig(Share const *share) {
-    double l = 1.0;
+    ZZ_p l = ZZ_p();
+    l += 1;
 
 //    cout  << "Share: " << share->id << endl;
 //    cout  << share->value << endl;
@@ -49,15 +52,16 @@ ZZ_p compute_threshold_sig(Share const *share) {
 
     /* In this version we assume that the first t+1 nodes cooperate (i.e. there
      * is no agreement porotcol involved and the set A is known in advance) */
-    for (int i = 1; i<=threshold+1; i++) {
+    for (long i = 1; i<=threshold+1; i++) {
         if (i == share->id)
             continue;
-        l *= ((double) i / (i - share->id));
+        l *= i;
+        l /= i - share->id;;
     }
 
 //    cout << "Lagrange coefficient of Thread " << share->id << ": " << l << endl;
 
-    ZZ_p k = share->value * (long) l;
+    ZZ_p k = share->value * l;
     ZZ_p threshold_sig = power(to_ZZ_p(message), rep(k));
 //    cout << "threshold_sig  for Thread " << share->id << ": " << threshold_sig<< endl;
 
