@@ -25,21 +25,18 @@ Poly::Poly(unsigned int deg, const BIGNUM *mod):deg(deg), modulus(NULL){
 
 Poly::~Poly() {
     BN_free(modulus);
-    for (unsigned int i=0; i<deg; i++) {
+    for (unsigned int i=0; i<=deg; i++) {
         BN_free(coeffs[i]);
     }
     delete[] coeffs;
 }
 
 BIGNUM * Poly::eval(unsigned long x) {
-    BN_CTX *bn_ctx = NULL;
     BIGNUM *res = NULL;
     BIGNUM *xval = NULL;
     BIGNUM *tmp = NULL;
     BIGNUM *tmp2 = NULL;
 
-    bn_ctx = BN_CTX_new();
-    BN_CTX_init(bn_ctx);
     res = BN_new();
     xval = BN_new();
     BN_zero(res);
@@ -59,11 +56,9 @@ BIGNUM * Poly::eval(unsigned long x) {
         BN_swap(tmp2, res);
     }
 
-    BN_free(res);
     BN_free(xval);
     BN_free(tmp);
     BN_free(tmp2);
-    BN_CTX_free(bn_ctx);
 
     return res;
 }
@@ -79,13 +74,19 @@ void Poly::set_coeff(unsigned int i, const BIGNUM *coeff) {
 }
 
 void Poly::print() {
+    char *s = NULL;
 
     for (unsigned int i=0; i<=deg; i++) {
-        cout << BN_bn2hex(coeffs[i]) << " x^" << i;
+        s = BN_bn2hex(coeffs[i]);
+        cout << s << " x^" << i;
+        free(s);
         if (i != deg)
             cout << " + ";
-        else
-            cout << " mod " << BN_bn2hex(modulus);
+        else {
+            s = BN_bn2hex(modulus);
+            cout << " mod " << s;
+            free(s);
+        }
     }
 
     cout << endl;
@@ -196,10 +197,15 @@ void test() {
     poly->print();
     res = poly->eval(10);
     cout << BN_bn2dec(res) << endl;
+    BN_free(res);
+    BN_free(bn);
+    delete poly;
     return;
 }
 
 int main() {
+    bn_ctx = BN_CTX_new();
+    BN_CTX_init(bn_ctx);
     BIGNUM *tmp = NULL;
     BIGNUM *recovered = NULL, *threshold_sig = NULL;
     BIGNUM *p = NULL, *q = NULL, *N = NULL, *e_value = NULL, *d = NULL;
@@ -207,9 +213,8 @@ int main() {
     BIGNUM *sig_shares[num_nodes];
     BIGNUM *sec_shares[num_nodes];
     BIGNUM *r0=NULL,*r1=NULL,*r2=NULL;
+    char *output = NULL;
 
-    bn_ctx = BN_CTX_new();
-    BN_CTX_init(bn_ctx);
 
     /* Generate RSA key using safe primes */
     p = BN_new();
@@ -234,7 +239,9 @@ int main() {
     Poly *poly = new Poly(threshold-1, N);
 
     /* Extract secret exponent */
-    cout << BN_bn2hex(d) << endl;
+    output = BN_bn2hex(d);
+    cout << output << endl;
+    free(output);
     poly->set_coeff(0, d);
     poly->print();
 
@@ -243,8 +250,10 @@ int main() {
         shares[i] = new Share(i+1, tmp, N);
         sig_shares[i] = compute_threshold_sig(shares[i]);
         sec_shares[i] = recover_secret(shares[i]);
+        BN_free(tmp);
     }
 
+    tmp = BN_new();
     recovered = BN_new();
     BN_zero(recovered);
     threshold_sig = BN_new();
@@ -252,19 +261,23 @@ int main() {
 
     /* Collect the threshold signatures from each thread and combine them */
     for (int i=0; i<=threshold; i++) {
-//        combined_sig *= sig_shares[i];
-//        combined_sec += sec_shares[i];
         BN_mod_add(tmp, recovered, sec_shares[i], N, bn_ctx);
         BN_swap(tmp, recovered);
         BN_mod_add(tmp, threshold_sig, sig_shares[i], N, bn_ctx);
         BN_swap(tmp, threshold_sig);
     }
 
-    cout << BN_bn2hex(recovered) << endl;
-//    cout << BN_bn2hex(threshold_sig) << endl;
+    output = BN_bn2hex(recovered);
+    cout << output << endl;
+    free(output);
+    output = BN_bn2hex(threshold_sig);
+    cout << output << endl;
+    free(output);
 
     BN_mod_exp(tmp, threshold_sig, e_value, N, bn_ctx);
-    cout << BN_bn2dec(tmp) << endl;
+    output = BN_bn2hex(tmp);
+    cout << output << endl;
+    free(output);
     delete poly;
     BN_free(tmp);
     BN_free(recovered);
