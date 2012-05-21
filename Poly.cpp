@@ -206,8 +206,8 @@ void test() {
 int main() {
     bn_ctx = BN_CTX_new();
     BN_CTX_init(bn_ctx);
-    BIGNUM *tmp = NULL;
-    BIGNUM *recovered = NULL, *threshold_sig = NULL;
+    BIGNUM *tmp = NULL, *dec = NULL;
+    BIGNUM *recovered = NULL, *threshold_sig = NULL, *sig = NULL, *msg = NULL;
     BIGNUM *p = NULL, *q = NULL, *N = NULL, *e_value = NULL, *d = NULL;
     Share *shares[num_nodes];
     BIGNUM *sig_shares[num_nodes];
@@ -234,13 +234,13 @@ int main() {
     BN_sub(r1,p,BN_value_one());    /* p-1 */
     BN_sub(r2,q,BN_value_one());    /* q-1 */
     BN_mul(r0,r1,r2,bn_ctx);   /* (p-1)(q-1) */
-    BN_mod_inverse(d,e_value,N,bn_ctx);  /* d */
+    BN_mod_inverse(d,e_value,r0,bn_ctx);  /* d */
 
     Poly *poly = new Poly(threshold-1, N);
 
     /* Extract secret exponent */
     output = BN_bn2hex(d);
-    cout << output << endl;
+    cout << "d: " << output << endl << endl;
     free(output);
     poly->set_coeff(0, d);
     poly->print();
@@ -268,17 +268,38 @@ int main() {
     }
 
     output = BN_bn2hex(recovered);
-    cout << output << endl;
+    cout << "Recovered secret: " << output << endl << endl;
     free(output);
+    if (!BN_cmp(d, recovered))
+        cout << "Sucessfully recovered the secret exponent" << endl << endl;
+    else
+        cout << "Failed to recover the secret exponent" << endl << endl;
+
+    sig = BN_new();
+    msg = BN_new();
+    dec = BN_new();
+    BN_set_word(msg, message);
+    BN_mod_exp(sig, msg, d, N, bn_ctx);
+    BN_mod_exp(dec, sig, e_value, N, bn_ctx);
+    output = BN_bn2hex(sig);
+    cout << "Signature: " << output << endl << endl;
+    free(output);
+    output = BN_bn2dec(dec);
+    cout << "Dec: " << output << endl << endl;
+    free(output);
+
     output = BN_bn2hex(threshold_sig);
-    cout << output << endl;
+    cout << "Threshold signature: " << output << endl << endl;
     free(output);
 
     BN_mod_exp(tmp, threshold_sig, e_value, N, bn_ctx);
     output = BN_bn2hex(tmp);
-    cout << output << endl;
+    cout << "\"Decrypted\" signature: " << output << endl << endl;
     free(output);
     delete poly;
+    BN_free(dec);
+    BN_free(msg);
+    BN_free(sig);
     BN_free(tmp);
     BN_free(recovered);
     BN_free(threshold_sig);
